@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 export default function Login() {
-  const [email, setEmail] = useState('rh.admin@crono-securite-demo.fr');
+  const [email, setEmail] = useState('lecture@crono-securite-demo.fr');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export default function Login() {
     <div className="login-screen">
       <form className="card login-card" onSubmit={handleSubmit}>
         <h1 style={{ color: '#C9A227' }}>Persora RH</h1>
-        <p className="seg-meta">Sourcing qualifié — Crono Sécurité</p>
+        <p className="seg-meta">Sourcing qualifié — sécurité hôtelière</p>
         <div className="field">
           <label htmlFor="email">E-mail</label>
           <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -40,7 +40,7 @@ export default function Login() {
           {loading ? 'Connexion…' : 'Se connecter'}
         </button>
         <p className="seg-meta" style={{ marginTop: 14 }}>
-          Comptes de test : rh.admin@crono-securite-demo.fr — mot de passe Persora2026!
+          Compte de démonstration (lecture seule) : lecture@crono-securite-demo.fr — mot de passe Persora2026!
         </p>
       </form>
     </div>

@@ -1,67 +1,65 @@
-# Persora RH — Sourcing qualifié pour Crono Sécurité
+# Persora RH — sourcing de candidats pour la sécurité hôtelière
 
-Projet annuel — Bachelor Data & Business Intelligence (Chef de projet web, RNCP40857)
-NEXA Digital School — Client réel : Crono Sécurité
+Application web de **présélection de candidats** pour des postes d'agent de sécurité en hôtellerie de luxe.
+Projet annuel certifiant du Bachelor Data & Business Intelligence (NEXA Digital School, titre RNCP40857), réalisé pour un client du secteur de la sécurité privée.
 
-## État réel de l'infrastructure (au moment de la livraison)
+**Stack** : React 18 · TypeScript · Vite · Supabase (PostgreSQL, Auth, Row Level Security) · Vercel
 
-✅ **Base de données Supabase — réellement créée et opérationnelle**
-- Projet : `persora-crono-securite` (région eu-west-1)
-- URL : `https://motuetyractuxkljqtlk.supabase.co`
-- 7 tables créées, RLS activée, 3 comptes de test fonctionnels, données de démonstration insérées
-- Vérifié par des requêtes SQL réelles (voir historique des migrations Supabase)
+## Le besoin
 
-⚠️ **Frontend — code complet et testé (build réussi), déploiement Vercel à finaliser manuellement**
-Le déploiement automatique depuis cet environnement n'est pas possible : la CLI Vercel nécessite un accès réseau direct à vercel.com, indisponible dans le bac à sable de génération. De même, je n'ai pas pu pousser directement sur ton dépôt GitHub (l'intégration ne fonctionne que depuis Claude Code, pas depuis cette interface de chat).
+Le recrutement d'agents de sécurité pour l'hôtellerie de luxe demande de vérifier, pour chaque candidat, des éléments précis : carte professionnelle, diplômes SSIAP ou SST et leurs dates d'expiration, expérience, disponibilité. Ces informations sont dispersées entre plusieurs plateformes d'emploi. Le recruteur perd du temps à les rassembler avant même le premier appel.
 
-**Ce qui a été réellement vérifié avant livraison :**
-- `npm run build` s'exécute sans erreur TypeScript (voir capture des logs de build)
-- Le schéma SQL a été appliqué pour de vrai sur Supabase (pas seulement écrit)
-- 3 comptes d'authentification réels créés via `auth.users` (Supabase Auth), avec mot de passe haché bcrypt
-- Les politiques RLS ont été vérifiées par lecture directe de `pg_policies`
+## Ce que fait l'application
 
-## Pour obtenir ta vraie URL publique (5 minutes, sans ligne de commande)
-
-1. Pousse ce code sur ton dépôt GitHub :
-   ```bash
-   cd frontend
-   git init
-   git remote add origin https://github.com/972-max/projet-final.git
-   git add .
-   git commit -m "Persora RH — version initiale"
-   git branch -M main
-   git push -u origin main
-   ```
-2. Va sur [vercel.com](https://vercel.com), connecte-toi avec ton compte GitHub
-3. Clique sur "Add New Project" → sélectionne `projet-final`
-4. Vercel détecte automatiquement Vite/React (aucune configuration à changer)
-5. Clique "Deploy" — ton URL publique est prête en moins de 2 minutes
-
-## Identifiants de test
-
-| Rôle | E-mail | Mot de passe |
-|---|---|---|
-| Responsable RH (admin) | `rh.admin@crono-securite-demo.fr` | `Persora2026!` |
-| Chargé de recrutement | `recruteur@crono-securite-demo.fr` | `Persora2026!` |
-| Consultation seule | `lecture@crono-securite-demo.fr` | `Persora2026!` |
-
-## Accès direct à la base (pour le jury / vérification)
-
-- Dashboard Supabase : connecte-toi sur [supabase.com](https://supabase.com) avec le compte propriétaire pour consulter le projet `persora-crono-securite`
-- Les fichiers `database/01_schema.sql`, `02_seed_demo.sql`, `03_auth_demo_accounts.sql` reproduisent exactement les migrations appliquées, dans l'ordre
+- **Vivier de candidats** : liste des profils repérés, avec leur statut dans le processus (nouveau, contacté, qualifié, entretien, embauché, refusé) et des indicateurs de suivi.
+- **Fiche candidat** : expérience, disponibilité, certifications avec date d'expiration et statut de vérification.
+- **Score de savoir-être indicatif** : affiché comme une aide à la présélection, avec un avertissement explicite. Aucune décision n'est prise automatiquement (article 22 du RGPD).
+- **Gestion du consentement RGPD** : chaque candidat a un statut (en attente, informé, opposé) et chaque action est historisée.
+- **Authentification** : trois rôles prévus (responsable RH, chargé de recrutement, lecture seule).
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    U[Recruteur] --> F[Front React + TypeScript<br/>hébergé sur Vercel]
+    F -->|supabase-js| A[Supabase Auth]
+    F -->|API REST| DB[(PostgreSQL<br/>Row Level Security)]
 ```
-frontend/         React + TypeScript + Vite, connecté directement à Supabase
-                   (pas de backend séparé — Supabase fait office d'API + base
-                   de données + authentification, via ses politiques RLS)
-database/          Schéma SQL réellement appliqué (dump)
-vercel.json        Configuration de routage SPA pour Vercel
+
+Pas de backend séparé : Supabase fournit l'API, la base et l'authentification. La sécurité repose sur les politiques **Row Level Security** de PostgreSQL. La clé publique Supabase présente dans le code est prévue pour être exposée côté client.
+
+## Modèle de données
+
+| Table | Rôle |
+|---|---|
+| `candidates` | Profils repérés : expérience, disponibilité, score indicatif, statut, consentement |
+| `certifications` | Carte professionnelle, SSIAP, SST : date d'expiration, vérification |
+| `consent_events` | Historique RGPD : information du candidat, opposition |
+| `sourcing_sources` / `sourcing_jobs` | Sources de sourcing et exécutions de collecte |
+| `staff_users` | Utilisateurs internes et leur rôle |
+| `audit_logs` | Journal des actions |
+
+Les scripts sont dans [`database/`](database/), à exécuter dans l'ordre : schéma, données de démonstration, comptes de test.
+
+## RGPD : les choix de conception
+
+- Les candidats sont identifiés nommément : un statut de consentement et une table d'historique (`consent_events`) permettent d'appliquer le droit d'information et d'opposition (article 14).
+- Le score de savoir-être reste un indicateur pour le recruteur, jamais un critère de décision automatique (article 22).
+- Les données de ce dépôt sont **entièrement fictives** (« Candidat Démo A, B, C »).
+
+## Lancer le projet
+
+```bash
+npm install
+npm run dev
 ```
 
-## Différence structurante avec la version marketing (Persora B2C)
+Compte de démonstration en lecture seule : `lecture@crono-securite-demo.fr` / `Persora2026!`
 
-Cette version identifie des personnes nommément (`candidates.full_name`), contrairement à la version segments-marketing anonymisés construite précédemment. Cela implique une table dédiée `consent_events` et un champ `consent_status` sur chaque candidat, pour respecter le droit d'opposition RGPD identifié comme obligatoire en partie 1 du dossier (cf. section "point d'attention légal et méthodologique").
+## Limites et suite
 
-Le score de savoir-être (`savoir_etre_score`) est volontairement présenté comme indicatif dans l'interface, avec un avertissement explicite contre toute décision automatisée — point à développer dans le cahier des charges (partie 1.d) et dans la section conformité (partie 2.e).
+- Les politiques RLS actuelles autorisent la lecture à tout utilisateur connecté. La prochaine étape est de **différencier les droits par rôle** et d'ajouter les politiques d'écriture (consentement, changement de statut).
+- Le pipeline de collecte et d'analyse des profils (Python) n'est pas publié dans ce dépôt.
+
+---
+Nathan Babootarie · Mastère Data & IA · en recherche d'alternance Data Analyst · [LinkedIn](https://linkedin.com/in/nathan-babootarie)
