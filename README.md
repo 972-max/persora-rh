@@ -39,7 +39,21 @@ Pas de backend séparé : Supabase fournit l'API, la base et l'authentification.
 | `staff_users` | Utilisateurs internes et leur rôle |
 | `audit_logs` | Journal des actions |
 
-Les scripts sont dans [`database/`](database/), à exécuter dans l'ordre : schéma, données de démonstration, comptes de test.
+Les scripts sont dans [`database/`](database/), à exécuter dans l'ordre : schéma, données de démonstration, comptes de test, puis renforcement de la sécurité.
+
+## Sécurité : droits par rôle
+
+Les droits sont appliqués directement dans PostgreSQL par des politiques **Row Level Security** :
+
+| Action | Visiteur non connecté | Lecture seule | Recruteur | Responsable RH |
+|---|---|---|---|---|
+| Consulter les candidats | ✗ | ✓ | ✓ | ✓ |
+| Modifier un statut | ✗ | ✗ | ✓ | ✓ |
+| Enregistrer un consentement RGPD | ✗ | ✗ | ✓ | ✓ |
+| Gérer les sources de sourcing | ✗ | ✗ | ✗ | ✓ |
+| Lire le journal d'audit | ✗ | ✗ | ✗ | ✓ |
+
+Ces règles ont été testées en simulant chaque rôle directement en base.
 
 ## RGPD : les choix de conception
 
@@ -58,7 +72,6 @@ Compte de démonstration en lecture seule : `lecture@crono-securite-demo.fr` / `
 
 ## Limites et suite
 
-- Les politiques RLS actuelles autorisent la lecture à tout utilisateur connecté. La prochaine étape est de **différencier les droits par rôle** et d'ajouter les politiques d'écriture (consentement, changement de statut).
 - Le pipeline de collecte et d'analyse des profils (Python) n'est pas publié dans ce dépôt.
 
 ---

@@ -1,5 +1,5 @@
 -- Persora — renforcement de la sécurité (Row Level Security)
--- Statut : préparé, pas encore appliqué sur la base Supabase.
+-- Statut : appliqué sur la base Supabase le 10/10/2026.
 -- 1. Active la RLS sur les tables de sourcing, jusqu'ici lisibles et modifiables
 --    par n'importe qui disposant de la clé publique.
 -- 2. Différencie les droits par rôle : admin et recruteur peuvent agir,
