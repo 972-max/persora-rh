@@ -3,6 +3,8 @@
 Application web de **présélection de candidats** pour des postes d'agent de sécurité en hôtellerie de luxe.
 Projet annuel certifiant du Bachelor Data & Business Intelligence (NEXA Digital School, titre RNCP40857), réalisé pour un client du secteur de la sécurité privée.
 
+**🔗 Démo en ligne : [persora-7q0ifzwe2…](https://persora-7q0ifzwe2-babootarienathan-3198s-projects.vercel.app)** · compte lecture seule : `lecture@crono-securite-demo.fr` / `Persora2026!`
+
 **Stack** : React 18 · TypeScript · Vite · Supabase (PostgreSQL, Auth, Row Level Security) · Vercel
 
 ## Le besoin
