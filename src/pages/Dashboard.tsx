@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase, Candidate } from '../lib/supabase';
+import { supabase, Candidate, friendlyError } from '../lib/supabase';
 
 const STATUS_LABELS: Record<string, string> = {
   new: 'Nouveau', contacted: 'Contacté', qualified: 'Qualifié',
@@ -21,7 +21,7 @@ export default function Dashboard() {
       .select('*, certifications(*)')
       .order('discovered_at', { ascending: false })
       .then(({ data, error }) => {
-        if (error) setError(error.message);
+        if (error) setError(friendlyError(error));
         else setCandidates(data as Candidate[]);
       });
   }, []);
@@ -43,7 +43,7 @@ export default function Dashboard() {
 
       {pendingConsent > 0 && (
         <div className="warn-box">
-          {pendingConsent} profil(s) en attente d'information sur leur intégration au vivier (droit d'opposition RGPD — voir partie 1 du dossier).
+          {pendingConsent} profil(s) en attente d'information sur leur intégration au vivier (droit d'opposition RGPD).
         </div>
       )}
 

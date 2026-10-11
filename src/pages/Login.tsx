@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase, friendlyError } from '../lib/supabase';
 
 export default function Login() {
   const [email, setEmail] = useState('lecture@crono-securite-demo.fr');
@@ -13,11 +13,17 @@ export default function Login() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError(friendlyError(error));
+        return;
+      }
+    } catch (err) {
+      setError(friendlyError(err));
       return;
+    } finally {
+      setLoading(false);
     }
     navigate('/');
   }

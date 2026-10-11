@@ -33,3 +33,40 @@ export interface Candidate {
   discovered_at: string;
   certifications?: Certification[];
 }
+
+export type StaffRole = 'admin' | 'recruiter' | 'readonly';
+
+export const ROLE_LABELS: Record<StaffRole, string> = {
+  admin: 'Responsable RH',
+  recruiter: 'Chargé de recrutement',
+  readonly: 'Lecture seule',
+};
+
+export const CONSENT_LABELS: Record<ConsentStatus, string> = {
+  pending: 'En attente',
+  informed: 'Informé',
+  opted_out: "S'est opposé",
+};
+
+// Rôle de l'utilisateur connecté, lu dans staff_users.
+// La politique RLS "Chacun lit son propre profil" ne renvoie que sa propre ligne.
+export async function fetchMyRole(): Promise<StaffRole | null> {
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return null;
+  const { data } = await supabase.from('staff_users').select('role').eq('id', auth.user.id).maybeSingle();
+  return (data?.role as StaffRole) ?? null;
+}
+
+// Traduit les erreurs techniques de Supabase en messages compréhensibles.
+export function friendlyError(raw: unknown): string {
+  const msg = typeof raw === 'string' ? raw : (raw as { message?: string })?.message ?? '';
+  if (/row-level security|permission denied|42501/i.test(msg)) {
+    return "Action non autorisée pour votre rôle. Elle est réservée aux recruteurs et aux responsables RH.";
+  }
+  if (/invalid login credentials/i.test(msg)) return 'E-mail ou mot de passe incorrect.';
+  if (/email not confirmed/i.test(msg)) return "Cette adresse e-mail n'est pas encore confirmée.";
+  if (!msg || msg === '{}' || /fetch|network|timeout/i.test(msg)) {
+    return 'Connexion au serveur impossible. La base de démonstration est peut-être en veille : réessayez dans une ou deux minutes.';
+  }
+  return msg;
+}
