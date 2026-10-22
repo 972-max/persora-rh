@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase, Candidate, CONSENT_LABELS, StaffRole, fetchMyRole, friendlyError } from '../lib/supabase';
+import { supabase, Candidate, CONSENT_LABELS, CERTIFICATION_LABELS, AVAILABILITY_LABELS, formatYears, StaffRole, fetchMyRole, friendlyError } from '../lib/supabase';
 
 export default function CandidateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -59,8 +59,8 @@ export default function CandidateDetail() {
     <div>
       <h1>{candidate.full_name}</h1>
       <p className="seg-meta">
-        {candidate.experience_years ? `${candidate.experience_years} ans d'expérience` : 'Expérience non renseignée'}
-        {candidate.availability ? ` — disponibilité : ${candidate.availability}` : ''}
+        {candidate.experience_years != null ? `${formatYears(candidate.experience_years)} d'expérience` : 'Expérience non renseignée'}
+        {candidate.availability ? ` — disponibilité : ${AVAILABILITY_LABELS[candidate.availability] ?? candidate.availability}` : ''}
       </p>
 
       {candidate.savoir_etre_score != null && (
@@ -74,7 +74,7 @@ export default function CandidateDetail() {
       <div>
         {(candidate.certifications ?? []).map((cert) => (
           <span key={cert.id} className="tag">
-            {cert.certification_type} {cert.is_verified ? '✓ vérifiée' : '(non vérifiée)'}
+            {CERTIFICATION_LABELS[cert.certification_type] ?? cert.certification_type} {cert.is_verified ? '✓ vérifiée' : '(non vérifiée)'}
             {cert.expiry_date ? ` — exp. ${cert.expiry_date}` : ''}
           </span>
         ))}

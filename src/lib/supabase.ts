@@ -70,3 +70,20 @@ export function friendlyError(raw: unknown): string {
   }
   return msg;
 }
+
+export const CERTIFICATION_LABELS: Record<string, string> = {
+  carte_professionnelle: 'Carte pro',
+  ssiap: 'SSIAP',
+  sst: 'SST',
+  autre: 'Autre',
+};
+
+export function formatYears(n: number | null): string {
+  if (n == null) return '—';
+  return `${n.toLocaleString('fr-FR')} an${n >= 2 ? 's' : ''}`;
+}
+
+export const AVAILABILITY_LABELS: Record<string, string> = {
+  immediate: 'immédiate',
+  sous_preavis: 'sous préavis',
+};

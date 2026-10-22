@@ -22,12 +22,14 @@ body {
 }
 h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; font-weight: 700; margin: 0 0 0.4em; }
 
-.app-shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+.app-shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
 .sidebar { background: var(--navy); color: #fff; padding: 24px 16px; }
 .sidebar .brand { font-family: Georgia, serif; font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--gold); }
 .sidebar a { display: block; padding: 9px 12px; border-radius: 8px; color: #C7CCDA; text-decoration: none; font-size: 14px; margin-bottom: 4px; }
 .sidebar a.active { background: var(--navy-light); color: #fff; font-weight: 600; }
-.main { padding: 28px 32px; max-width: 1100px; }
+.main { padding: 28px 32px; max-width: 1100px; min-width: 0; }
+.table-card { padding: 0; overflow-x: auto; }
+.status-badge, .consent-badge { white-space: nowrap; }
 
 .login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--navy); }
 .login-card { width: 360px; padding: 28px; }
@@ -72,10 +74,17 @@ tr.candidate-row:hover { background: var(--cream); }
 .role-chip { display: inline-block; margin: -12px 0 20px; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; color: var(--gold-light); border: 1px solid var(--navy-light); background: var(--navy-light); }
 button:disabled { opacity: 0.6; cursor: wait; }
 @media (max-width: 720px) {
-  .app-shell { grid-template-columns: 1fr; }
-  .sidebar { padding: 16px; }
+  .app-shell { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .sidebar { padding: 14px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+  .sidebar .brand { margin: 0; font-size: 18px; }
+  .role-chip { margin: 0; }
+  .sidebar a { margin: 0; padding: 6px 10px; }
+  .sidebar a[style] { margin-top: 0 !important; }
   .main { padding: 20px 16px; }
-  .kpi-row { grid-template-columns: 1fr; }
+  .kpi-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .kpi { padding: 12px; }
+  .kpi .num { font-size: 20px; }
   .login-card { width: calc(100% - 32px); }
-  .card table { display: block; overflow-x: auto; }
+  table { font-size: 12.5px; }
+  th, td { padding: 8px 10px; }
 }

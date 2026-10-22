@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase, Candidate, friendlyError } from '../lib/supabase';
+import { supabase, Candidate, friendlyError, CERTIFICATION_LABELS, formatYears } from '../lib/supabase';
 
 const STATUS_LABELS: Record<string, string> = {
   new: 'Nouveau', contacted: 'Contacté', qualified: 'Qualifié',
@@ -43,11 +43,11 @@ export default function Dashboard() {
 
       {pendingConsent > 0 && (
         <div className="warn-box">
-          {pendingConsent} profil(s) en attente d'information sur leur intégration au vivier (droit d'opposition RGPD).
+          {pendingConsent > 1 ? `${pendingConsent} profils attendent d'être informés de leur intégration` : "1 profil attend d'être informé de son intégration"} au vivier (droit d'opposition RGPD).
         </div>
       )}
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card table-card">
         <table>
           <thead>
             <tr>
@@ -62,10 +62,10 @@ export default function Dashboard() {
             {candidates.map((c) => (
               <tr key={c.id} className="candidate-row" onClick={() => navigate(`/candidates/${c.id}`)}>
                 <td><strong>{c.full_name}</strong></td>
-                <td>{c.experience_years ? `${c.experience_years} ans` : '—'}</td>
+                <td>{formatYears(c.experience_years)}</td>
                 <td>
                   {(c.certifications ?? []).map((cert) => (
-                    <span key={cert.id} className="tag">{cert.certification_type}</span>
+                    <span key={cert.id} className="tag">{CERTIFICATION_LABELS[cert.certification_type] ?? cert.certification_type}</span>
                   ))}
                 </td>
                 <td><span className={`status-badge status-${c.status}`}>{STATUS_LABELS[c.status]}</span></td>
