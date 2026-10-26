@@ -1,80 +1,69 @@
-# Persora RH — sourcing de candidats pour la sécurité hôtelière
+# Persora — recrutement des agents de sécurité privée
 
-Application web de **présélection de candidats** pour des postes d'agent de sécurité en hôtellerie de luxe.
-Projet annuel certifiant du Bachelor Data & Business Intelligence (NEXA Digital School, titre RNCP40857), réalisé pour un client du secteur de la sécurité privée.
+Logiciel de gestion des candidatures pour les sociétés de sécurité privée : page de candidature
+à leur nom, suivi des certifications (carte professionnelle, SSIAP, SST) et de leurs dates
+d'expiration, conformité RGPD intégrée. Une même installation sert plusieurs entreprises clientes,
+chacune ne voyant que ses propres données.
 
-**🔗 Démo en ligne : [persora-rh-babootarienathan-3198s-projects.vercel.app](https://persora-rh-babootarienathan-3198s-projects.vercel.app)** · compte lecture seule : `lecture@crono-securite-demo.fr` / `Persora2026!`
+**Stack** : React 18 · TypeScript · Vite · Supabase (PostgreSQL, Auth, Storage, Edge Functions, Row Level Security) · Vercel
 
-**Stack** : React 18 · TypeScript · Vite · Supabase (PostgreSQL, Auth, Row Level Security) · Vercel
+> La version de démonstration (projet annuel du Bachelor Data & BI, NEXA Digital School) reste
+> sur la branche `main`. Cette branche `production` contient la version commercialisable.
 
-## Le besoin
+## Fonctionnement
 
-Le recrutement d'agents de sécurité pour l'hôtellerie de luxe demande de vérifier, pour chaque candidat, des éléments précis : carte professionnelle, diplômes SSIAP ou SST et leurs dates d'expiration, expérience, disponibilité. Ces informations sont dispersées entre plusieurs plateformes d'emploi. Le recruteur perd du temps à les rassembler avant même le premier appel.
+| Qui | Où | Quoi |
+|---|---|---|
+| Candidat | `/postuler/:entreprise` | Dépose son CV, déclare ses certifications, accepte la politique de confidentialité, choisit ou non d'entrer dans le vivier |
+| Candidat | `/mes-donnees/:entreprise` | Demande l'accès, la rectification, la suppression ou s'oppose |
+| Recruteur | `/app` | Vivier filtrable, fiche candidat, vérification des certifications, statut, notes |
+| Responsable RH | `/app/equipe`, `/app/entreprise` | Comptes de l'équipe, identité légale, durées de conservation, ouverture des candidatures |
 
-## Ce que fait l'application
+## Choix de conformité
 
-- **Vivier de candidats** : liste des profils repérés, avec leur statut dans le processus (nouveau, contacté, qualifié, entretien, embauché, refusé) et des indicateurs de suivi.
-- **Fiche candidat** : expérience, disponibilité, certifications avec date d'expiration et statut de vérification.
-- **Score de savoir-être indicatif** : affiché comme une aide à la présélection, avec un avertissement explicite. Aucune décision n'est prise automatiquement (article 22 du RGPD).
-- **Gestion du consentement RGPD** : chaque candidat a un statut (en attente, informé, opposé) et chaque action est historisée.
-- **Authentification** : trois rôles prévus (responsable RH, chargé de recrutement, lecture seule).
+- **Aucune collecte automatique** de profils sur des plateformes tierces : les candidats postulent
+  volontairement, ou l'équipe ajoute une candidature qu'elle a elle-même reçue.
+- **Bases légales** : mesures précontractuelles pour la candidature, consentement pour le vivier.
+- **Aucune décision automatisée** (article 22) : pas de score, pas de tri algorithmique.
+- **Conservation** : durée paramétrable par entreprise (24 mois avec accord, 6 mois sans, par défaut).
+  Une maintenance horaire (`pg_cron` → fonction `maintenance`) supprime les profils expirés et efface les CV.
+- **Isolement** : chaque table est protégée par des politiques RLS fondées sur l'appartenance à l'entreprise ;
+  les visiteurs non connectés n'ont accès qu'à trois fonctions contrôlées (page publique, candidature, demande de droits).
+- **CV** : stockage privé, 5 Mo maximum, PDF ou Word, lisible uniquement par l'équipe de l'entreprise concernée,
+  via des liens temporaires d'une minute.
+- **Historique RGPD** et **journal des actions** conservés sans donnée personnelle après suppression d'un profil.
 
-## Architecture
+## Rôles
 
-```mermaid
-flowchart LR
-    U[Recruteur] --> F[Front React + TypeScript<br/>hébergé sur Vercel]
-    F -->|supabase-js| A[Supabase Auth]
-    F -->|API REST| DB[(PostgreSQL<br/>Row Level Security)]
+| Action | Lecture seule | Chargé de recrutement | Responsable RH |
+|---|---|---|---|
+| Consulter candidats, offres, demandes | ✓ | ✓ | ✓ |
+| Modifier un candidat, vérifier une certification, supprimer un profil | ✗ | ✓ | ✓ |
+| Gérer les offres, traiter une demande RGPD | ✗ | ✓ | ✓ |
+| Gérer l'équipe et l'entreprise, lire le journal | ✗ | ✗ | ✓ |
+
+## Structure
+
+```
+src/pages/public/      pages candidats (accueil, candidature, confidentialité, droits, mentions légales)
+src/pages/app/         espace recruteur
+supabase/migrations/   schéma, sécurité, fonctions (à appliquer dans l'ordre)
+supabase/functions/    maintenance (purge RGPD), manage-member (comptes de l'équipe)
 ```
 
-Pas de backend séparé : Supabase fournit l'API, la base et l'authentification. La sécurité repose sur les politiques **Row Level Security** de PostgreSQL. La clé publique Supabase présente dans le code est prévue pour être exposée côté client.
-
-## Modèle de données
-
-| Table | Rôle |
-|---|---|
-| `candidates` | Profils repérés : expérience, disponibilité, score indicatif, statut, consentement |
-| `certifications` | Carte professionnelle, SSIAP, SST : date d'expiration, vérification |
-| `consent_events` | Historique RGPD : information du candidat, opposition |
-| `sourcing_sources` / `sourcing_jobs` | Sources de sourcing et exécutions de collecte |
-| `staff_users` | Utilisateurs internes et leur rôle |
-| `audit_logs` | Journal des actions |
-
-Les scripts sont dans [`database/`](database/), à exécuter dans l'ordre : schéma, données de démonstration, comptes de test, puis renforcement de la sécurité.
-
-## Sécurité : droits par rôle
-
-Les droits sont appliqués directement dans PostgreSQL par des politiques **Row Level Security** :
-
-| Action | Visiteur non connecté | Lecture seule | Recruteur | Responsable RH |
-|---|---|---|---|---|
-| Consulter les candidats | ✗ | ✓ | ✓ | ✓ |
-| Modifier un statut | ✗ | ✗ | ✓ | ✓ |
-| Enregistrer un consentement RGPD | ✗ | ✗ | ✓ | ✓ |
-| Gérer les sources de sourcing | ✗ | ✗ | ✗ | ✓ |
-| Lire le journal d'audit | ✗ | ✗ | ✗ | ✓ |
-
-Ces règles ont été testées en simulant chaque rôle directement en base.
-
-## RGPD : les choix de conception
-
-- Les candidats sont identifiés nommément : un statut de consentement et une table d'historique (`consent_events`) permettent d'appliquer le droit d'information et d'opposition (article 14).
-- Le score de savoir-être reste un indicateur pour le recruteur, jamais un critère de décision automatique (article 22).
-- Les données de ce dépôt sont **entièrement fictives** (« Candidat Démo A, B, C »).
-
-## Lancer le projet
+## Lancer en local
 
 ```bash
+cp .env.example .env.local   # renseigner l'URL et la clé publique Supabase
 npm install
 npm run dev
 ```
 
-Compte de démonstration en lecture seule : `lecture@crono-securite-demo.fr` / `Persora2026!`
+## Avant la commercialisation
 
-## Limites et suite
-
-- Le pipeline de collecte et d'analyse des profils (Python) n'est pas publié dans ce dépôt.
+- Compléter `src/lib/legal.ts` : SIRET et adresse de l'éditeur.
+- Signer avec chaque entreprise cliente un contrat de sous-traitance (article 28 du RGPD).
+- Dans le tableau de bord Supabase : désactiver les inscriptions publiques (Authentication → Sign In / Providers).
 
 ---
-Nathan Babootarie · Mastère Data & IA · en recherche d'alternance Data Analyst · [LinkedIn](https://linkedin.com/in/nathan-babootarie)
+Nathan Babootarie · [LinkedIn](https://linkedin.com/in/nathan-babootarie)

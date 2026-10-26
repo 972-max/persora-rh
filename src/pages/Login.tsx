@@ -1,9 +1,9 @@
-import { FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, type FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase, friendlyError } from '../lib/supabase';
 
 export default function Login() {
-  const [email, setEmail] = useState('lecture@crono-securite-demo.fr');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -14,40 +14,39 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setError(friendlyError(error));
-        return;
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) { setError(friendlyError(error)); return; }
+      navigate('/app');
     } catch (err) {
       setError(friendlyError(err));
-      return;
     } finally {
       setLoading(false);
     }
-    navigate('/');
   }
 
   return (
     <div className="login-screen">
       <form className="card login-card" onSubmit={handleSubmit}>
-        <h1 style={{ color: '#C9A227' }}>Persora RH</h1>
-        <p className="seg-meta">Sourcing qualifié — sécurité hôtelière</p>
+        <h1 className="login-title">Persora</h1>
+        <p className="seg-meta">Espace recruteur</p>
         <div className="field">
           <label htmlFor="email">E-mail</label>
-          <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input id="email" type="email" autoComplete="username" value={email}
+            onChange={(e) => setEmail(e.target.value)} required />
         </div>
         <div className="field">
           <label htmlFor="password">Mot de passe</label>
-          <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input id="password" type="password" autoComplete="current-password" value={password}
+            onChange={(e) => setPassword(e.target.value)} required />
         </div>
-        {error && <p className="error-text">{error}</p>}
-        <button className="btn-primary" type="submit" disabled={loading} style={{ width: '100%' }}>
+        {error && <p className="error-text" role="alert">{error}</p>}
+        <button className="btn-primary btn-block" type="submit" disabled={loading}>
           {loading ? 'Connexion…' : 'Se connecter'}
         </button>
-        <p className="seg-meta" style={{ marginTop: 14 }}>
-          Compte de démonstration (lecture seule) : lecture@crono-securite-demo.fr — mot de passe Persora2026!
+        <p className="seg-meta login-help">
+          Mot de passe oublié ? Demandez au responsable RH de votre entreprise de vous en attribuer un nouveau.
         </p>
+        <p className="seg-meta"><Link to="/">← Retour</Link></p>
       </form>
     </div>
   );
